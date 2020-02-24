@@ -380,8 +380,8 @@ static void processMultiTelemetryPaket(const uint8_t * packet, uint8_t module)
       break;
 
     case FrSkySportTelemetry:
-      if (len >= 4)
-        sportProcessTelemetryPacket(data);
+      if (checkSportPacket(data))
+        sportProcessTelemetryPacketWithoutCrc(module << 2, data);
       else
         TRACE("[MP] Received sport telemetry len %d < 4", len);
       break;
