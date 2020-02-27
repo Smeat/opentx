@@ -129,6 +129,12 @@ void auxSerialPutc(char c)
 #endif
 }
 
+uint8_t auxSerialReadc() {
+	uint8_t data = 0;
+	auxSerialRxFifo.pop(data);
+	return data;
+}
+
 void auxSerialSbusInit()
 {
   auxSerialSetup(SBUS_BAUDRATE, true);

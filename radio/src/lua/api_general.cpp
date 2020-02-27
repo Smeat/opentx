@@ -1585,6 +1585,11 @@ static int luaSerialWrite(lua_State * L)
   return 0;
 }
 
+static int luaSerialRead(lua_State * L) {
+	lua_pushinteger(L, auxSerialReadc());
+	return 0;
+}
+
 const luaL_Reg opentxLib[] = {
   { "getTime", luaGetTime },
   { "getDateTime", luaGetDateTime },
@@ -1632,6 +1637,7 @@ const luaL_Reg opentxLib[] = {
   { "multiBuffer", luaMultiBuffer },
 #endif
   { "serialWrite", luaSerialWrite },
+  { "serialRead", luaSerialRead },
   { nullptr, nullptr }  /* sentinel */
 };
 
