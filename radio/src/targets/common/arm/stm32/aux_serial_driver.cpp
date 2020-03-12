@@ -24,6 +24,7 @@
 uint8_t auxSerialMode = 0;
 Fifo<uint8_t, 512> auxSerialTxFifo;
 AuxSerialRxFifo auxSerialRxFifo __DMA (AUX_SERIAL_DMA_Stream_RX);
+Fifo<uint8_t, 256> auxSerialRxTestFifo;
 
 void auxSerialSetup(unsigned int baudrate, bool dma)
 {
@@ -129,10 +130,8 @@ void auxSerialPutc(char c)
 #endif
 }
 
-uint8_t auxSerialReadc() {
-	uint8_t data = 0;
-	auxSerialRxFifo.pop(data);
-	return data;
+int auxSerialReadc(uint8_t * data) {
+	return auxSerialRxTestFifo.pop(*data);
 }
 
 void auxSerialSbusInit()
@@ -172,7 +171,8 @@ extern "C" void AUX_SERIAL_USART_IRQHandler(void)
     }
   }
 
-#if defined(CLI)
+#define AUX_SERIAL_READ
+#if defined(CLI) || defined(AUX_SERIAL_READ)
   if (getSelectedUsbMode() != USB_SERIAL_MODE) {
     // Receive
     uint32_t status = AUX_SERIAL_USART->SR;
@@ -181,9 +181,17 @@ extern "C" void AUX_SERIAL_USART_IRQHandler(void)
       if (!(status & USART_FLAG_ERRORS)) {
         switch (auxSerialMode) {
           case UART_MODE_DEBUG:
+          #ifdef CLI
             cliRxFifo.push(data);
+            #endif
             break;
+          #ifdef AUX_SERIAL_READ
+           case UART_MODE_LUA:
+           auxSerialRxTestFifo.push(data);
+          #endif
+           
         }
+        
       }
       status = AUX_SERIAL_USART->SR;
     }

@@ -1586,8 +1586,35 @@ static int luaSerialWrite(lua_State * L)
 }
 
 static int luaSerialRead(lua_State * L) {
-	lua_pushinteger(L, auxSerialReadc());
-	return 0;
+	uint8_t data = 0;
+	if(auxSerialReadc(&data)) {
+		lua_pushinteger(L, data);
+	}
+	else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+// XXX: This needs to be always present
+// TODO: do this here or in lua? better solution here?
+#define LUA_SERIAL_RX_BUF_SIZE 128
+uint8_t lua_line_buf[LUA_SERIAL_RX_BUF_SIZE];
+
+static int luaSerialReadLine(lua_State * L) {
+	int pos = 0;
+	uint8_t data = 0;
+	while(auxSerialReadc(&data) && data != '\n' && pos < LUA_SERIAL_RX_BUF_SIZE - 2) {
+		lua_line_buf[pos++] = data;
+	}
+	lua_line_buf[pos] = '\0';
+	if(pos == 0) {
+		lua_pushnil(L);
+	}
+	else {
+		lua_pushstring(L, (char*)lua_line_buf);
+	}
+	return 1;
 }
 
 const luaL_Reg opentxLib[] = {
@@ -1638,6 +1665,7 @@ const luaL_Reg opentxLib[] = {
 #endif
   { "serialWrite", luaSerialWrite },
   { "serialRead", luaSerialRead },
+  { "serialReadLine", luaSerialReadLine },
   { nullptr, nullptr }  /* sentinel */
 };
 
